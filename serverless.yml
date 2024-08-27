@@ -1,0 +1,28 @@
+service: api-to-geojson-s3-converter
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: ap-northeast-1
+  environment:
+    EXTERNAL_API_URL: ${file(./config/${self:provider.stage}.json):EXTERNAL_API_URL}
+    FIWARE_SERVICE: ${file(./config/${self:provider.stage}.json):FIWARE_SERVICE}
+    API_KEY: ${file(./config/${self:provider.stage}.json):API_KEY}
+    S3_BUCKET: ${file(./config/${self:provider.stage}.json):S3_BUCKET}
+    TZ: Asia/Tokyo
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+      Resource: arn:aws:s3:::${file(./config/${self:provider.stage}.json):S3_BUCKET}/*
+
+
+functions:
+  callExternalApi:
+    handler: src/index.handler
+    events:
+      - eventBridge:
+          schedule: cron(0 0 * * ? *)
+          enabled: true
+    timeout: 300

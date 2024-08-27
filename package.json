@@ -1,0 +1,23 @@
+{
+  "name": "api-to-geojson-s3-converter",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "aws-sdk": "^2.1682.0",
+    "axios": "^1.7.5",
+    "moment": "^2.30.1",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "serverless": "^3.39.0",
+    "serverless-dotenv-plugin": "^6.0.0",
+    "serverless-offline": "^13.7.0"
+  }
+}
