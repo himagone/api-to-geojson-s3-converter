@@ -10,13 +10,29 @@ const FIWARE_SERVICE = process.env.FIWARE_SERVICE;
 const API_KEY = process.env.API_KEY;
 const S3_BUCKET = process.env.S3_BUCKET;
 
-
-function convertToGeoJSON(facilities) {
+function extractPropeties(obj, prefix=''){
+  const properties ={};
+  for(const [key, value] of Object.entries(obj)){
+    if(value && typeof value === 'object'){
+      if('value' in value){
+        properties[`${prefix}${key}`] = value.value;
+      }else{
+        Object.assign(properties, extractPropeties(value, `${prefix}${key}.`));
+      }
+    }else{
+      properties[`${prefix}${key}`] = value;
+    }
+  }
+  return properties;
+}
+function convertToGeoJSON(facilities){
   const features = facilities.map(facility => {
     const coordinates = [
       facility.FacilityAddress.value.Longitude.value,
       facility.FacilityAddress.value.Latitude.value
     ];
+
+    const properties = extractPropeties(facility);
 
     return {
       type: "Feature",
@@ -24,20 +40,9 @@ function convertToGeoJSON(facilities) {
         type: "Point",
         coordinates: coordinates
       },
-      properties: {
-        id: facility.id,
-        name: facility.Name.value,
-        nameKana: facility.NameKana.value,
-        address: facility.FacilityAddress.value.FullAddress.value,
-        description: facility.Description.value,
-        remarks: facility.Remarks.value,
-        dateTimeRemarks: facility.DateTimeRemarks.value,
-        contactPointName: facility.ContactPointInformation.value.ContactPointName.value,
-        contactPointPhoneNumber: facility.ContactPointInformation.value.ContactPointPhoneNumber.value
-      }
+      properties: properties
     };
   });
-
   return {
     type: "FeatureCollection",
     features: features
