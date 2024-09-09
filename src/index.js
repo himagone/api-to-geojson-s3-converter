@@ -9,6 +9,31 @@ const EXTERNAL_API_URL = process.env.EXTERNAL_API_URL;
 const FIWARE_SERVICE = process.env.FIWARE_SERVICE;
 const API_KEY = process.env.API_KEY;
 const S3_BUCKET = process.env.S3_BUCKET;
+function findValueByKey(obj, targetKey) {
+  if (obj && typeof obj === 'object') {
+    if (targetKey in obj) {
+      return obj[targetKey];
+    }
+    for (const value of Object.values(obj)) {
+      const result = findValueByKey(value, targetKey);
+      if (result !== undefined) {
+        return result;
+      }
+    }
+  }
+  return undefined;
+}
+function getCoordinates(facility) {
+  const longitude = findValueByKey(facility, 'Longitude');
+  const latitude = findValueByKey(facility, 'Latitude');
+  
+  if (longitude !== undefined && latitude !== undefined) {
+    return [longitude, latitude];
+  }
+  
+  console.warn('Longitude or Latitude not found in facility:', facility);
+  return null;
+}
 
 function extractPropeties(obj, prefix=''){
   const properties ={};
@@ -27,10 +52,7 @@ function extractPropeties(obj, prefix=''){
 }
 function convertToGeoJSON(facilities){
   const features = facilities.map(facility => {
-    const coordinates = [
-      facility.FacilityAddress.value.Longitude.value,
-      facility.FacilityAddress.value.Latitude.value
-    ];
+    const coordinates = getCoordinates(facility);
 
     const properties = extractPropeties(facility);
 

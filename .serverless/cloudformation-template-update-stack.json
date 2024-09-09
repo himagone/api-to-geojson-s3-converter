@@ -169,7 +169,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/api-to-geojson-s3-converter/dev/1725605306646-2024-09-06T06:48:26.646Z/api-to-geojson-s3-converter.zip"
+          "S3Key": "serverless/api-to-geojson-s3-converter/dev/1725849275467-2024-09-09T02:34:35.467Z/api-to-geojson-s3-converter.zip"
         },
         "Handler": "src/index.handler",
         "Runtime": "nodejs18.x",
@@ -196,14 +196,14 @@
         "CallExternalApiLogGroup"
       ]
     },
-    "CallExternalApiLambdaVersionvg5SuXL6nEgVoS7nXE4tTcasxRdnidYoIf7IS3vY": {
+    "CallExternalApiLambdaVersionN2iK5G2qmHFbhQoGcCNLva8viKJU9ZmdjHOI8AjE": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CallExternalApiLambdaFunction"
         },
-        "CodeSha256": "EY7Tl9ebLj8dsQsuPo3oMSfq/vF5LamZ0G/A6pQIBuI="
+        "CodeSha256": "SD78iVq5VrZjPCr3WS/Q6ogl4hyTu+bWuHaXagcwXxQ="
       }
     },
     "Apitogeojsons3converterdevcallExternalApirule1EventBridgeRule": {
@@ -278,7 +278,7 @@
     "CallExternalApiLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CallExternalApiLambdaVersionvg5SuXL6nEgVoS7nXE4tTcasxRdnidYoIf7IS3vY"
+        "Ref": "CallExternalApiLambdaVersionN2iK5G2qmHFbhQoGcCNLva8viKJU9ZmdjHOI8AjE"
       },
       "Export": {
         "Name": "sls-api-to-geojson-s3-converter-dev-CallExternalApiLambdaFunctionQualifiedArn"
