@@ -35,7 +35,7 @@ resources:
     S3Bucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: 'smartcity-yaizu-test'
+        BucketName: 'smartcity-yaizu'
         AccessControl: Private
         CorsConfiguration:
           CorsRules:
