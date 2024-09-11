@@ -45,11 +45,15 @@ resources:
                 - HEAD
               MaxAge: 3000
 
-    CloudFrontOriginAccessIdentity:
-      Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
-      Properties:
-        CloudFrontOriginAccessIdentityConfig:
-          Comment: Access to my S3 bucket
+    CloudFrontOriginAccessControl:
+          Type: AWS::CloudFront::OriginAccessControl
+          Properties:
+            OriginAccessControlConfig:
+              Description: Default Origin Access Control
+              Name: S3OriginAccessControl
+              OriginAccessControlOriginType: s3
+              SigningBehavior: always
+              SigningProtocol: sigv4
 
     CloudFrontDistribution:
       Type: AWS::CloudFront::Distribution
@@ -77,11 +81,9 @@ resources:
             - Id: S3Origin
               DomainName:
                 Fn::GetAtt: [S3Bucket, DomainName]
-              OriginPath: ""
-              S3OriginConfig:
-                OriginAccessIdentity:
-                  Fn::Sub: 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
-
+              OriginAccessControlId:
+                Ref: CloudFrontOriginAccessControl
+              S3OriginConfig: {}
     S3BucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
@@ -93,8 +95,7 @@ resources:
             - Sid: PolicyForCloudFrontPrivateContent
               Effect: Allow
               Principal:
-                AWS:
-                  Fn::Sub: 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}'
+                Service: cloudfront.amazonaws.com
               Action: s3:GetObject
               Resource:
                 Fn::Join:
@@ -102,8 +103,13 @@ resources:
                   - - 'arn:aws:s3:::'
                     - Ref: S3Bucket
                     - '/*'
+              Condition:
+                StringEquals:
+                  AWS:SourceArn:
+                    Fn::Sub: arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/${CloudFrontOriginAccessControl}
 
 outputs:
   CloudFrontDistributionDomainName:
+    Description: "CloudFront Distribution Domain Name"
     Value:
       Fn::GetAtt: [CloudFrontDistribution, DomainName]

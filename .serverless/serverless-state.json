@@ -194,7 +194,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/api-to-geojson-s3-converter/dev/1725958401807-2024-09-10T08:53:21.807Z/api-to-geojson-s3-converter.zip"
+                "S3Key": "serverless/api-to-geojson-s3-converter/dev/1726028098842-2024-09-11T04:14:58.842Z/api-to-geojson-s3-converter.zip"
               },
               "Handler": "src/index.handler",
               "Runtime": "nodejs18.x",
@@ -311,11 +311,15 @@
               }
             }
           },
-          "CloudFrontOriginAccessIdentity": {
-            "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+          "CloudFrontOriginAccessControl": {
+            "Type": "AWS::CloudFront::OriginAccessControl",
             "Properties": {
-              "CloudFrontOriginAccessIdentityConfig": {
-                "Comment": "Access to my S3 bucket"
+              "OriginAccessControlConfig": {
+                "Description": "Default Origin Access Control",
+                "Name": "S3OriginAccessControl",
+                "OriginAccessControlOriginType": "s3",
+                "SigningBehavior": "always",
+                "SigningProtocol": "sigv4"
               }
             }
           },
@@ -332,7 +336,18 @@
                   },
                   "MinTTL": 0,
                   "DefaultTTL": 1200,
-                  "MaxTTL": 3600
+                  "MaxTTL": 3600,
+                  "AllowedMethods": [
+                    "GET",
+                    "HEAD",
+                    "OPTIONS"
+                  ],
+                  "CachedMethods": [
+                    "GET",
+                    "HEAD",
+                    "OPTIONS"
+                  ],
+                  "Compress": true
                 },
                 "Origins": [
                   {
@@ -340,17 +355,15 @@
                     "DomainName": {
                       "Fn::GetAtt": [
                         "S3Bucket",
-                        "RegionalDomainName"
+                        "DomainName"
                       ]
                     },
-                    "S3OriginConfig": {
-                      "OriginAccessIdentity": {
-                        "Fn::Sub": "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
-                      }
-                    }
+                    "OriginAccessControlId": {
+                      "Ref": "CloudFrontOriginAccessControl"
+                    },
+                    "S3OriginConfig": {}
                   }
-                ],
-                "DefaultRootObject": "index.json"
+                ]
               }
             }
           },
@@ -364,7 +377,11 @@
                 "Version": "2012-10-17",
                 "Statement": [
                   {
+                    "Sid": "PolicyForCloudFrontPrivateContent",
                     "Effect": "Allow",
+                    "Principal": {
+                      "Service": "cloudfront.amazonaws.com"
+                    },
                     "Action": "s3:GetObject",
                     "Resource": {
                       "Fn::Join": [
@@ -378,12 +395,11 @@
                         ]
                       ]
                     },
-                    "Principal": {
-                      "CanonicalUser": {
-                        "Fn::GetAtt": [
-                          "CloudFrontOriginAccessIdentity",
-                          "S3CanonicalUserId"
-                        ]
+                    "Condition": {
+                      "StringEquals": {
+                        "AWS:SourceArn": {
+                          "Fn::Sub": "arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/${CloudFrontOriginAccessControl}"
+                        }
                       }
                     }
                   }
@@ -543,11 +559,15 @@
             }
           }
         },
-        "CloudFrontOriginAccessIdentity": {
-          "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+        "CloudFrontOriginAccessControl": {
+          "Type": "AWS::CloudFront::OriginAccessControl",
           "Properties": {
-            "CloudFrontOriginAccessIdentityConfig": {
-              "Comment": "Access to my S3 bucket"
+            "OriginAccessControlConfig": {
+              "Description": "Default Origin Access Control",
+              "Name": "S3OriginAccessControl",
+              "OriginAccessControlOriginType": "s3",
+              "SigningBehavior": "always",
+              "SigningProtocol": "sigv4"
             }
           }
         },
@@ -564,7 +584,18 @@
                 },
                 "MinTTL": 0,
                 "DefaultTTL": 1200,
-                "MaxTTL": 3600
+                "MaxTTL": 3600,
+                "AllowedMethods": [
+                  "GET",
+                  "HEAD",
+                  "OPTIONS"
+                ],
+                "CachedMethods": [
+                  "GET",
+                  "HEAD",
+                  "OPTIONS"
+                ],
+                "Compress": true
               },
               "Origins": [
                 {
@@ -572,17 +603,15 @@
                   "DomainName": {
                     "Fn::GetAtt": [
                       "S3Bucket",
-                      "RegionalDomainName"
+                      "DomainName"
                     ]
                   },
-                  "S3OriginConfig": {
-                    "OriginAccessIdentity": {
-                      "Fn::Sub": "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
-                    }
-                  }
+                  "OriginAccessControlId": {
+                    "Ref": "CloudFrontOriginAccessControl"
+                  },
+                  "S3OriginConfig": {}
                 }
-              ],
-              "DefaultRootObject": "index.json"
+              ]
             }
           }
         },
@@ -596,7 +625,11 @@
               "Version": "2012-10-17",
               "Statement": [
                 {
+                  "Sid": "PolicyForCloudFrontPrivateContent",
                   "Effect": "Allow",
+                  "Principal": {
+                    "Service": "cloudfront.amazonaws.com"
+                  },
                   "Action": "s3:GetObject",
                   "Resource": {
                     "Fn::Join": [
@@ -610,12 +643,11 @@
                       ]
                     ]
                   },
-                  "Principal": {
-                    "CanonicalUser": {
-                      "Fn::GetAtt": [
-                        "CloudFrontOriginAccessIdentity",
-                        "S3CanonicalUserId"
-                      ]
+                  "Condition": {
+                    "StringEquals": {
+                      "AWS:SourceArn": {
+                        "Fn::Sub": "arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/${CloudFrontOriginAccessControl}"
+                      }
                     }
                   }
                 }
@@ -641,6 +673,7 @@
       },
       "outputs": {
         "CloudFrontDistributionDomainName": {
+          "Description": "CloudFront Distribution Domain Name",
           "Value": {
             "Fn::GetAtt": [
               "CloudFrontDistribution",
@@ -658,7 +691,7 @@
     "artifact": "/Users/user/Documents/git/api-to-geojson-s3-converter/.serverless/api-to-geojson-s3-converter.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/api-to-geojson-s3-converter/dev/1725958401807-2024-09-10T08:53:21.807Z",
+    "artifactDirectoryName": "serverless/api-to-geojson-s3-converter/dev/1726028098842-2024-09-11T04:14:58.842Z",
     "artifact": "api-to-geojson-s3-converter.zip"
   }
 }
