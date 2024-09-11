@@ -9,10 +9,12 @@ const EXTERNAL_API_URL = process.env.EXTERNAL_API_URL;
 const FIWARE_SERVICE = process.env.FIWARE_SERVICE;
 const API_KEY = process.env.API_KEY;
 const S3_BUCKET = process.env.S3_BUCKET;
+
+
 function findValueByKey(obj, targetKey) {
   if (obj && typeof obj === 'object') {
-    if (targetKey in obj) {
-      return obj[targetKey];
+    if (targetKey in obj && 'value' in obj[targetKey]) {
+      return obj[targetKey].value;
     }
     for (const value of Object.values(obj)) {
       const result = findValueByKey(value, targetKey);
@@ -23,6 +25,7 @@ function findValueByKey(obj, targetKey) {
   }
   return undefined;
 }
+
 function getCoordinates(facility) {
   const longitude = findValueByKey(facility, 'Longitude');
   const latitude = findValueByKey(facility, 'Latitude');
@@ -35,26 +38,36 @@ function getCoordinates(facility) {
   return null;
 }
 
-function extractPropeties(obj, prefix=''){
-  const properties ={};
+function findValue(obj) {
+  const result ={};
   for(const [key, value] of Object.entries(obj)){
-    if(value && typeof value === 'object'){
-      if('value' in value){
-        properties[`${prefix}${key}`] = value.value;
-      }else{
-        Object.assign(properties, extractPropeties(value, `${prefix}${key}.`));
+    if(value && typeof value === 'object' && 'value' in value){
+      const dispValue = value.value;
+
+      if(value.type === 'Number'){
+        result[key] = Number(value.value);
+      }else if(value.type === 'Text'){
+        result[key] = value.value;
+      }else if (typeof dispValue === 'object') {
+        result[key] = findValue(dispValue);
+      } else {
+        result[key] = dispValue;
       }
-    }else{
-      properties[`${prefix}${key}`] = value;
+    } else if (typeof value === 'object') {
+      result[key] = findValue(value);
+    } else {
+      result[key] = value;
     }
   }
-  return properties;
+  return result;
 }
 function convertToGeoJSON(facilities){
+  if (!Array.isArray(facilities || !facilities.length)) {
+    throw new Error('cannot convert to GeoJSON');
+  }
   const features = facilities.map(facility => {
     const coordinates = getCoordinates(facility);
-
-    const properties = extractPropeties(facility);
+    const properties = findValue(facility);
 
     return {
       type: "Feature",
@@ -65,6 +78,7 @@ function convertToGeoJSON(facilities){
       properties: properties
     };
   });
+  console.log('features:', features);
   return {
     type: "FeatureCollection",
     features: features
@@ -85,8 +99,17 @@ async function callApi(apiType){
   try {
     const response = await axios.get(requestURL, {
       headers,
-      timeout: 30000
+      timeout: 3000
     });
+    if (response.status !== 200) {
+      throw new Error(`API returned non-200 status code: ${response.status}`);
+    }else if(
+      !response.data ||
+      !Array.isArray(response.data) ||
+      response.data.length === 0
+    ){
+      throw new Error('API returned empty data.');
+    }
     return response;
   } catch (error) {
     console.error(`Failed to save ${apiType.dataname} to S3.`, error);
@@ -97,8 +120,7 @@ async function callApi(apiType){
 async function pushToS3(dataname,response){
   try{
     const now = moment();
-    const fileName = `${dataname}/${now.format('YYYY-MM-DD')}/${now.format('HH-mm-ss')}.json`;
-
+    const fileName = `${dataname}/${now.format('YYYY-MM-DD')}/${now.format('HH-mm-ss')}.geojson`;
     await s3.putObject({
       Bucket: S3_BUCKET,
       Key: fileName,
@@ -119,7 +141,11 @@ exports.handler = async (event) => {
     try{
       console.log(`Processing apiType: ${apiType.dataname}`);
       const apiData = await callApi(apiType);
-      const convertResult = convertToGeoJSON(apiData.data);
+      try {
+        convertResult = convertToGeoJSON(apiData.data);
+      } catch (convertError) {
+        throw new Error(`Failed to convert data to GeoJSON: ${convertError.message}`);
+      }
       await pushToS3(apiType.dataname, convertResult);
       results.push({ apiType: apiType.dataname, status: 'success' });
     }catch(error){

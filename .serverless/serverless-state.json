@@ -20,7 +20,8 @@
         {
           "Effect": "Allow",
           "Action": [
-            "s3:PutObject"
+            "s3:PutObject",
+            "s3:GetObject"
           ],
           "Resource": "arn:aws:s3:::smartcity-yaizu-test/*"
         }
@@ -193,7 +194,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/api-to-geojson-s3-converter/dev/1725849275467-2024-09-09T02:34:35.467Z/api-to-geojson-s3-converter.zip"
+                "S3Key": "serverless/api-to-geojson-s3-converter/dev/1725958401807-2024-09-10T08:53:21.807Z/api-to-geojson-s3-converter.zip"
               },
               "Handler": "src/index.handler",
               "Runtime": "nodejs18.x",
@@ -220,21 +221,21 @@
               "CallExternalApiLogGroup"
             ]
           },
-          "CallExternalApiLambdaVersionN2iK5G2qmHFbhQoGcCNLva8viKJU9ZmdjHOI8AjE": {
+          "CallExternalApiLambdaVersionOh2ejO6QFx8woGop0HjrGuTTpYfW0SDLH9aDo": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CallExternalApiLambdaFunction"
               },
-              "CodeSha256": "SD78iVq5VrZjPCr3WS/Q6ogl4hyTu+bWuHaXagcwXxQ="
+              "CodeSha256": "fIonLRYgTC1nV+C9GvIkypleRaWZh6GoTkelouGrb0g="
             }
           },
           "Apitogeojsons3converterdevcallExternalApirule1EventBridgeRule": {
             "Type": "AWS::Events::Rule",
             "Properties": {
               "Name": "api-to-geojson-s3-converter-dev-callExternalApi-rule-1",
-              "ScheduleExpression": "rate(5 minutes)",
+              "ScheduleExpression": "rate(3 minutes)",
               "State": "ENABLED",
               "Targets": [
                 {
@@ -285,6 +286,110 @@
                 ]
               }
             }
+          },
+          "S3Bucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketName": "smartcity-yaizu-test",
+              "AccessControl": "Private",
+              "CorsConfiguration": {
+                "CorsRules": [
+                  {
+                    "AllowedOrigins": [
+                      "*"
+                    ],
+                    "AllowedHeaders": [
+                      "*"
+                    ],
+                    "AllowedMethods": [
+                      "GET",
+                      "HEAD"
+                    ],
+                    "MaxAge": 3000
+                  }
+                ]
+              }
+            }
+          },
+          "CloudFrontOriginAccessIdentity": {
+            "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+            "Properties": {
+              "CloudFrontOriginAccessIdentityConfig": {
+                "Comment": "Access to my S3 bucket"
+              }
+            }
+          },
+          "CloudFrontDistribution": {
+            "Type": "AWS::CloudFront::Distribution",
+            "Properties": {
+              "DistributionConfig": {
+                "Enabled": true,
+                "DefaultCacheBehavior": {
+                  "ViewerProtocolPolicy": "redirect-to-https",
+                  "TargetOriginId": "S3Origin",
+                  "ForwardedValues": {
+                    "QueryString": false
+                  },
+                  "MinTTL": 0,
+                  "DefaultTTL": 1200,
+                  "MaxTTL": 3600
+                },
+                "Origins": [
+                  {
+                    "Id": "S3Origin",
+                    "DomainName": {
+                      "Fn::GetAtt": [
+                        "S3Bucket",
+                        "RegionalDomainName"
+                      ]
+                    },
+                    "S3OriginConfig": {
+                      "OriginAccessIdentity": {
+                        "Fn::Sub": "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
+                      }
+                    }
+                  }
+                ],
+                "DefaultRootObject": "index.json"
+              }
+            }
+          },
+          "S3BucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "S3Bucket"
+              },
+              "PolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Action": "s3:GetObject",
+                    "Resource": {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:aws:s3:::",
+                          {
+                            "Ref": "S3Bucket"
+                          },
+                          "/*"
+                        ]
+                      ]
+                    },
+                    "Principal": {
+                      "CanonicalUser": {
+                        "Fn::GetAtt": [
+                          "CloudFrontOriginAccessIdentity",
+                          "S3CanonicalUserId"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
           }
         },
         "Outputs": {
@@ -299,7 +404,7 @@
           "CallExternalApiLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CallExternalApiLambdaVersionN2iK5G2qmHFbhQoGcCNLva8viKJU9ZmdjHOI8AjE"
+              "Ref": "CallExternalApiLambdaVersionOh2ejO6QFx8woGop0HjrGuTTpYfW0SDLH9aDo"
             },
             "Export": {
               "Name": "sls-api-to-geojson-s3-converter-dev-CallExternalApiLambdaFunctionQualifiedArn"
@@ -398,7 +503,7 @@
         "events": [
           {
             "eventBridge": {
-              "schedule": "rate(5 minutes)",
+              "schedule": "rate(3 minutes)",
               "enabled": true
             }
           }
@@ -409,8 +514,117 @@
         "memory": 1024,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "CallExternalApiLambdaVersionN2iK5G2qmHFbhQoGcCNLva8viKJU9ZmdjHOI8AjE"
+        "versionLogicalId": "CallExternalApiLambdaVersionOh2ejO6QFx8woGop0HjrGuTTpYfW0SDLH9aDo"
       }
+    },
+    "resources": {
+      "Resources": {
+        "S3Bucket": {
+          "Type": "AWS::S3::Bucket",
+          "Properties": {
+            "BucketName": "smartcity-yaizu-test",
+            "AccessControl": "Private",
+            "CorsConfiguration": {
+              "CorsRules": [
+                {
+                  "AllowedOrigins": [
+                    "*"
+                  ],
+                  "AllowedHeaders": [
+                    "*"
+                  ],
+                  "AllowedMethods": [
+                    "GET",
+                    "HEAD"
+                  ],
+                  "MaxAge": 3000
+                }
+              ]
+            }
+          }
+        },
+        "CloudFrontOriginAccessIdentity": {
+          "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+          "Properties": {
+            "CloudFrontOriginAccessIdentityConfig": {
+              "Comment": "Access to my S3 bucket"
+            }
+          }
+        },
+        "CloudFrontDistribution": {
+          "Type": "AWS::CloudFront::Distribution",
+          "Properties": {
+            "DistributionConfig": {
+              "Enabled": true,
+              "DefaultCacheBehavior": {
+                "ViewerProtocolPolicy": "redirect-to-https",
+                "TargetOriginId": "S3Origin",
+                "ForwardedValues": {
+                  "QueryString": false
+                },
+                "MinTTL": 0,
+                "DefaultTTL": 1200,
+                "MaxTTL": 3600
+              },
+              "Origins": [
+                {
+                  "Id": "S3Origin",
+                  "DomainName": {
+                    "Fn::GetAtt": [
+                      "S3Bucket",
+                      "RegionalDomainName"
+                    ]
+                  },
+                  "S3OriginConfig": {
+                    "OriginAccessIdentity": {
+                      "Fn::Sub": "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
+                    }
+                  }
+                }
+              ],
+              "DefaultRootObject": "index.json"
+            }
+          }
+        },
+        "S3BucketPolicy": {
+          "Type": "AWS::S3::BucketPolicy",
+          "Properties": {
+            "Bucket": {
+              "Ref": "S3Bucket"
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "s3:GetObject",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:s3:::",
+                        {
+                          "Ref": "S3Bucket"
+                        },
+                        "/*"
+                      ]
+                    ]
+                  },
+                  "Principal": {
+                    "CanonicalUser": {
+                      "Fn::GetAtt": [
+                        "CloudFrontOriginAccessIdentity",
+                        "S3CanonicalUserId"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Outputs": {}
     },
     "configValidationMode": "warn",
     "serviceFilename": "serverless.yml",
@@ -421,14 +635,30 @@
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
+      },
+      "outputs": {
+        "CloudFrontDistributionDomainName": {
+          "Value": {
+            "Fn::GetAtt": [
+              "CloudFrontDistribution",
+              "DomainName"
+            ]
+          }
+        }
       }
     },
     "layers": {},
+    "outputs": {
+      "$ref": "$[\"service\"][\"initialServerlessConfig\"][\"outputs\"]"
+    },
     "isDashboardMonitoringPreconfigured": false,
     "artifact": "/Users/user/Documents/git/api-to-geojson-s3-converter/.serverless/api-to-geojson-s3-converter.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/api-to-geojson-s3-converter/dev/1725849275467-2024-09-09T02:34:35.467Z",
+    "artifactDirectoryName": "serverless/api-to-geojson-s3-converter/dev/1725958401807-2024-09-10T08:53:21.807Z",
     "artifact": "api-to-geojson-s3-converter.zip"
   }
 }
