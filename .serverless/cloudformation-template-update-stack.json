@@ -139,9 +139,13 @@
                   "Effect": "Allow",
                   "Action": [
                     "s3:PutObject",
-                    "s3:GetObject"
+                    "s3:GetObject",
+                    "s3:ListBucket"
                   ],
-                  "Resource": "arn:aws:s3:::smartcity-yaizu-test/*"
+                  "Resource": [
+                    "arn:aws:s3:::smartcity-yaizu-test",
+                    "arn:aws:s3:::smartcity-yaizu-test/*"
+                  ]
                 }
               ]
             }
@@ -170,7 +174,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/api-to-geojson-s3-converter/dev/1726028098842-2024-09-11T04:14:58.842Z/api-to-geojson-s3-converter.zip"
+          "S3Key": "serverless/api-to-geojson-s3-converter/dev/1726033588751-2024-09-11T05:46:28.751Z/api-to-geojson-s3-converter.zip"
         },
         "Handler": "src/index.handler",
         "Runtime": "nodejs18.x",
@@ -211,7 +215,7 @@
       "Type": "AWS::Events::Rule",
       "Properties": {
         "Name": "api-to-geojson-s3-converter-dev-callExternalApi-rule-1",
-        "ScheduleExpression": "rate(3 minutes)",
+        "ScheduleExpression": "cron(0 0 * * ? *)",
         "State": "ENABLED",
         "Targets": [
           {
@@ -308,7 +312,7 @@
         "DistributionConfig": {
           "Enabled": true,
           "DefaultCacheBehavior": {
-            "ViewerProtocolPolicy": "redirect-to-https",
+            "ViewerProtocolPolicy": "allow-all",
             "TargetOriginId": "S3Origin",
             "ForwardedValues": {
               "QueryString": false
@@ -318,13 +322,7 @@
             "MaxTTL": 3600,
             "AllowedMethods": [
               "GET",
-              "HEAD",
-              "OPTIONS"
-            ],
-            "CachedMethods": [
-              "GET",
-              "HEAD",
-              "OPTIONS"
+              "HEAD"
             ],
             "Compress": true
           },
@@ -404,6 +402,15 @@
       "Export": {
         "Name": "sls-api-to-geojson-s3-converter-dev-CallExternalApiLambdaFunctionQualifiedArn"
       }
+    },
+    "URL": {
+      "Value": {
+        "Fn::GetAtt": [
+          "CloudFrontDistribution",
+          "DomainName"
+        ]
+      },
+      "Description": "CloudFront URL"
     }
   }
 }

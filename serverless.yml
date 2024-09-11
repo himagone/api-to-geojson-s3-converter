@@ -16,14 +16,17 @@ provider:
       Action:
         - s3:PutObject
         - s3:GetObject
-      Resource: arn:aws:s3:::${file(./config/${self:provider.stage}.json):S3_BUCKET}/*
+        - s3:ListBucket
+      Resource:
+        - arn:aws:s3:::${file(./config/${self:provider.stage}.json):S3_BUCKET}
+        - arn:aws:s3:::${file(./config/${self:provider.stage}.json):S3_BUCKET}/*
 
 functions:
   callExternalApi:
     handler: src/index.handler
     events:
       - eventBridge:
-          schedule: rate(3 minutes)
+          schedule: cron(0 0 * * ? *)
           enabled: true
     timeout: 300
 
@@ -46,14 +49,14 @@ resources:
               MaxAge: 3000
 
     CloudFrontOriginAccessControl:
-          Type: AWS::CloudFront::OriginAccessControl
-          Properties:
-            OriginAccessControlConfig:
-              Description: Default Origin Access Control
-              Name: S3OriginAccessControl
-              OriginAccessControlOriginType: s3
-              SigningBehavior: always
-              SigningProtocol: sigv4
+      Type: AWS::CloudFront::OriginAccessControl
+      Properties:
+        OriginAccessControlConfig:
+          Description: Default Origin Access Control
+          Name: S3OriginAccessControl
+          OriginAccessControlOriginType: s3
+          SigningBehavior: always
+          SigningProtocol: sigv4
 
     CloudFrontDistribution:
       Type: AWS::CloudFront::Distribution
@@ -61,7 +64,7 @@ resources:
         DistributionConfig:
           Enabled: true
           DefaultCacheBehavior:
-            ViewerProtocolPolicy: redirect-to-https
+            ViewerProtocolPolicy: allow-all
             TargetOriginId: S3Origin
             ForwardedValues:
               QueryString: false
@@ -71,11 +74,6 @@ resources:
             AllowedMethods:
               - GET
               - HEAD
-              - OPTIONS
-            CachedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
             Compress: true
           Origins:
             - Id: S3Origin
@@ -84,6 +82,7 @@ resources:
               OriginAccessControlId:
                 Ref: CloudFrontOriginAccessControl
               S3OriginConfig: {}
+
     S3BucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
@@ -108,8 +107,8 @@ resources:
                   AWS:SourceArn:
                     Fn::Sub: arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/${CloudFrontOriginAccessControl}
 
-outputs:
-  CloudFrontDistributionDomainName:
-    Description: "CloudFront Distribution Domain Name"
-    Value:
-      Fn::GetAtt: [CloudFrontDistribution, DomainName]
+  Outputs:
+    URL:
+      Value:
+        Fn::GetAtt: [CloudFrontDistribution, DomainName]
+      Description: CloudFront URL
