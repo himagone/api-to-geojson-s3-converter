@@ -26,7 +26,7 @@ functions:
     handler: src/index.handler
     events:
       - eventBridge:
-          schedule: cron(0 0 * * ? *)
+          schedule: cron(0 3 * * ? *)
           enabled: true
     timeout: 300
 

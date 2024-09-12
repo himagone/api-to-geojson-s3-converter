@@ -101,18 +101,13 @@ async function callApi(apiType){
       headers,
       timeout: 3000
     });
-    if (response.status !== 200) {
-      throw new Error(`API returned non-200 status code: ${response.status}`);
-    }else if(
-      !response.data ||
-      !Array.isArray(response.data) ||
-      response.data.length === 0
-    ){
-      throw new Error('API returned empty data.');
+    if (response && response.data) {
+      return response;
+    } else {
+      throw new Error(`Empty or invalid response for ${apiType.dataname}`);
     }
-    return response;
   } catch (error) {
-    console.error(`Failed to save ${apiType.dataname} to S3.`, error);
+    console.error(`Failed to get ${apiType.dataname} from api`, error);
     throw error;
   }
 };
@@ -120,7 +115,7 @@ async function callApi(apiType){
 async function pushToS3(dataname,response){
   try{
     const now = moment();
-    const fileName = `${dataname}/${now.format('YYYY-MM-DD')}/${now.format('HH-mm-ss')}.geojson`;
+    const fileName = `${dataname}/${now.format('YYYY-MM-DD')}.geojson`;
     await s3.putObject({
       Bucket: S3_BUCKET,
       Key: fileName,
@@ -141,16 +136,12 @@ exports.handler = async (event) => {
     try{
       console.log(`Processing apiType: ${apiType.dataname}`);
       const apiData = await callApi(apiType);
-      try {
-        convertResult = convertToGeoJSON(apiData.data);
-      } catch (convertError) {
-        throw new Error(`Failed to convert data to GeoJSON: ${convertError.message}`);
-      }
+      convertResult = convertToGeoJSON(apiData.data);
       await pushToS3(apiType.dataname, convertResult);
-      results.push({ apiType: apiType.dataname, status: 'success' });
+      results.push({ apiType: apiType.dataname});
     }catch(error){
-      console.error('Error in Lambda execution:', error);
-      errors.push({ apiType: apiType.dataname, status: 'error', message: error.message });
+      console.error('Error:', error);
+      errors.push({ apiType: apiType.dataname, message: error.message });
     }
   }
   return {
@@ -158,3 +149,5 @@ exports.handler = async (event) => {
     body: JSON.stringify({ results, errors })
   };
 }
+
+exports.callApi = callApi;

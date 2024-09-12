@@ -174,7 +174,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/api-to-geojson-s3-converter/dev/1726033588751-2024-09-11T05:46:28.751Z/api-to-geojson-s3-converter.zip"
+          "S3Key": "serverless/api-to-geojson-s3-converter/dev/1726113870474-2024-09-12T04:04:30.474Z/api-to-geojson-s3-converter.zip"
         },
         "Handler": "src/index.handler",
         "Runtime": "nodejs18.x",
@@ -201,21 +201,21 @@
         "CallExternalApiLogGroup"
       ]
     },
-    "CallExternalApiLambdaVersionOh2ejO6QFx8woGop0HjrGuTTpYfW0SDLH9aDo": {
+    "CallExternalApiLambdaVersion4tnXLTGfJ9nWCfL2Y7fjKXEFMhY0ARYumJZPk9COiL8": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CallExternalApiLambdaFunction"
         },
-        "CodeSha256": "fIonLRYgTC1nV+C9GvIkypleRaWZh6GoTkelouGrb0g="
+        "CodeSha256": "zDUvA2UTn97r6D1eISaSc0JoXB6ozFaBd7tlzjHr4g4="
       }
     },
     "Apitogeojsons3converterdevcallExternalApirule1EventBridgeRule": {
       "Type": "AWS::Events::Rule",
       "Properties": {
         "Name": "api-to-geojson-s3-converter-dev-callExternalApi-rule-1",
-        "ScheduleExpression": "cron(0 0 * * ? *)",
+        "ScheduleExpression": "cron(0 3 * * ? *)",
         "State": "ENABLED",
         "Targets": [
           {
@@ -273,7 +273,7 @@
     "S3Bucket": {
       "Type": "AWS::S3::Bucket",
       "Properties": {
-        "BucketName": "smartcity-yaizu-test",
+        "BucketName": "smartcity-yaizu",
         "AccessControl": "Private",
         "CorsConfiguration": {
           "CorsRules": [
@@ -397,7 +397,7 @@
     "CallExternalApiLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CallExternalApiLambdaVersionOh2ejO6QFx8woGop0HjrGuTTpYfW0SDLH9aDo"
+        "Ref": "CallExternalApiLambdaVersion4tnXLTGfJ9nWCfL2Y7fjKXEFMhY0ARYumJZPk9COiL8"
       },
       "Export": {
         "Name": "sls-api-to-geojson-s3-converter-dev-CallExternalApiLambdaFunctionQualifiedArn"
