@@ -33,7 +33,6 @@ function getCoordinates(facility) {
   if (longitude !== undefined && latitude !== undefined) {
     return [longitude, latitude];
   }
-  
   console.warn('Longitude or Latitude not found in facility:', facility);
   return null;
 }
@@ -62,11 +61,12 @@ function findValue(obj) {
   return result;
 }
 function convertToGeoJSON(facilities){
-  if (!Array.isArray(facilities || !facilities.length)) {
+  if (facilities.length === 0) {
     throw new Error('cannot convert to GeoJSON');
   }
   const features = facilities.map(facility => {
     const coordinates = getCoordinates(facility);
+    if (!coordinates) throw new Error('cannot convert to GeoJSON');
     const properties = findValue(facility);
 
     return {
@@ -78,7 +78,6 @@ function convertToGeoJSON(facilities){
       properties: properties
     };
   });
-  console.log('features:', features);
   return {
     type: "FeatureCollection",
     features: features
@@ -95,17 +94,15 @@ async function callApi(apiType){
   };
   const param = new URLSearchParams({ type: apiType.entityId });
   const requestURL = `${EXTERNAL_API_URL}?${param.toString()}`;
-  console.log('Calling'+ requestURL);
   try {
     const response = await axios.get(requestURL, {
       headers,
       timeout: 3000
     });
-    if (response && response.data) {
-      return response;
-    } else {
+    if (!response.data) {
       throw new Error(`Empty or invalid response for ${apiType.dataname}`);
     }
+    return response;
   } catch (error) {
     console.error(`Failed to get ${apiType.dataname} from api`, error);
     throw error;
@@ -150,4 +147,4 @@ exports.handler = async (event) => {
   };
 }
 
-exports.callApi = callApi;
+exports.convertToGeoJSON = convertToGeoJSON;

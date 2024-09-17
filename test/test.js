@@ -1,18 +1,35 @@
-const { handler } = require('../src/index');
+const { convertToGeoJSON, handler } = require('../src/index');
 const mockResponses = require('./mockResponses');
-const AWS = require('aws-sdk');
+const axios = require('axios');
 
 jest.mock('../src/apiTypes', () => [
   { dataname: 'Heliport', entityId: 'Heliport' }
 ]);
 
-jest.mock('axios');
-jest.mock('aws-sdk');
+const mockApi = (response) => {
+  return jest.spyOn(axios, 'get').mockResolvedValue(response);
+};
+
+describe('Lambda Normal Test', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockApi(mockResponses.success);
+  });
+
+  test(`convertGeojson test`, async () => {
+    const response = await axios.get('/test');
+    const result = convertToGeoJSON(response.data);
+
+    expect(result.type).toEqual('FeatureCollection');
+    expect(result.features.length).toEqual(1);
+    expect(result.features[0].geometry.coordinates).toEqual([138.31503, 34.841823]);
+  });
+});
 
 const errorCases = [
   {
     name: 'EMPTY DATA with status code 200',
-    mockResponse: 'emptyData',
+    mockResponse: mockResponses.partialData,
     expectedStatusCode: 500,
   },
   {
@@ -40,10 +57,8 @@ const errorCases = [
 errorCases.forEach(({ name, mockResponse }) => {
   describe('Lambda Error Handler Tests', () => {
     beforeEach(() => {
-      jest.resetModules();
-      jest.mock('axios', () => ({
-        get: jest.fn(() => Promise.resolve(mockResponse))
-      }));
+      jest.clearAllMocks();
+      mockApi(mockResponse);
     });
 
     test(`Error handling is fine when ${name}`, async () => {
