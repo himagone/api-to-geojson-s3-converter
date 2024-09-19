@@ -30,27 +30,22 @@ const errorCases = [
   {
     name: 'EMPTY DATA with status code 200',
     mockResponse: mockResponses.partialData,
-    expectedStatusCode: 500,
   },
   {
     name: 'null with status code 200',
     mockResponse: mockResponses.emptyData,
-    expectedStatusCode: 500,
   },
   {
     name: 'data not Exist with status code 200',
-    mockResponse:mockResponses.nonExistData,
-    expectedStatusCode: 500,
+    mockResponse: mockResponses.nonExistData,
   },
   {
     name: 'status code 400',
     mockResponse: mockResponses.clientError,
-    expectedStatusCode: 500,
   },
   {
     name: 'status code 500',
     mockResponse: mockResponses.serverError,
-    expectedStatusCode: 500,
   },
 ];
 
@@ -64,10 +59,10 @@ errorCases.forEach(({ name, mockResponse }) => {
     test(`Error handling is fine when ${name}`, async () => {
       const result = await handler();
       const body = JSON.parse(result.body);
-
+      
       expect(result.statusCode).toBe(500);
-      expect(body.results).toEqual([]);
-      expect(body.errors.length).toBeGreaterThan(0);
+      expect(body[0].status).toEqual('error');
+      expect(body[0].message).toEqual(expect.any(String));
     });
   });
 });

@@ -1,4 +1,4 @@
-service: api-to-geojson-s3-converter
+service: api-to-geojson-lambda
 
 provider:
   name: aws
@@ -26,7 +26,7 @@ functions:
     handler: src/index.handler
     events:
       - eventBridge:
-          schedule: cron(0 3 * * ? *)
+          schedule: cron(0 18 * * ? *)
           enabled: true
     timeout: 300
 

@@ -74,7 +74,7 @@
     "CallExternalApiLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/lambda/api-to-geojson-s3-converter-dev-callExternalApi"
+        "LogGroupName": "/aws/lambda/api-to-geojson-lambda-dev-callExternalApi"
       }
     },
     "IamRoleLambdaExecution": {
@@ -102,7 +102,7 @@
               "Fn::Join": [
                 "-",
                 [
-                  "api-to-geojson-s3-converter",
+                  "api-to-geojson-lambda",
                   "dev",
                   "lambda"
                 ]
@@ -120,7 +120,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-to-geojson-s3-converter-dev*:*"
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-to-geojson-lambda-dev*:*"
                     }
                   ]
                 },
@@ -131,7 +131,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-to-geojson-s3-converter-dev*:*:*"
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-to-geojson-lambda-dev*:*:*"
                     }
                   ]
                 },
@@ -143,8 +143,8 @@
                     "s3:ListBucket"
                   ],
                   "Resource": [
-                    "arn:aws:s3:::smartcity-yaizu-test",
-                    "arn:aws:s3:::smartcity-yaizu-test/*"
+                    "arn:aws:s3:::smartcity-yaizu",
+                    "arn:aws:s3:::smartcity-yaizu/*"
                   ]
                 }
               ]
@@ -156,7 +156,7 @@
           "Fn::Join": [
             "-",
             [
-              "api-to-geojson-s3-converter",
+              "api-to-geojson-lambda",
               "dev",
               {
                 "Ref": "AWS::Region"
@@ -174,11 +174,11 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/api-to-geojson-s3-converter/dev/1726113870474-2024-09-12T04:04:30.474Z/api-to-geojson-s3-converter.zip"
+          "S3Key": "serverless/api-to-geojson-lambda/dev/1726644442189-2024-09-18T07:27:22.189Z/api-to-geojson-lambda.zip"
         },
         "Handler": "src/index.handler",
         "Runtime": "nodejs18.x",
-        "FunctionName": "api-to-geojson-s3-converter-dev-callExternalApi",
+        "FunctionName": "api-to-geojson-lambda-dev-callExternalApi",
         "MemorySize": 1024,
         "Timeout": 300,
         "Environment": {
@@ -186,7 +186,7 @@
             "EXTERNAL_API_URL": "https://api.smartcity-yaizu.jp/v2/entities/",
             "FIWARE_SERVICE": "smartcity_yaizu",
             "API_KEY": "c54a2f8e-a32c-d9f6-7a64-693eb50f0e96",
-            "S3_BUCKET": "smartcity-yaizu-test",
+            "S3_BUCKET": "smartcity-yaizu",
             "TZ": "Asia/Tokyo"
           }
         },
@@ -201,21 +201,21 @@
         "CallExternalApiLogGroup"
       ]
     },
-    "CallExternalApiLambdaVersion4tnXLTGfJ9nWCfL2Y7fjKXEFMhY0ARYumJZPk9COiL8": {
+    "CallExternalApiLambdaVersionZtKeQJOdultWrt8niAHQEVuH6ZGDnclgxW7auBT1YM": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CallExternalApiLambdaFunction"
         },
-        "CodeSha256": "zDUvA2UTn97r6D1eISaSc0JoXB6ozFaBd7tlzjHr4g4="
+        "CodeSha256": "jSD9czkHxio9nYbXNExb280kocIpfNbmtbAhVqPn1/8="
       }
     },
-    "Apitogeojsons3converterdevcallExternalApirule1EventBridgeRule": {
+    "ApitogeojsonlambdadevcallExternalApirule1EventBridgeRule": {
       "Type": "AWS::Events::Rule",
       "Properties": {
-        "Name": "api-to-geojson-s3-converter-dev-callExternalApi-rule-1",
-        "ScheduleExpression": "cron(0 3 * * ? *)",
+        "Name": "api-to-geojson-lambda-dev-callExternalApi-rule-1",
+        "ScheduleExpression": "cron(0 18 * * ? *)",
         "State": "ENABLED",
         "Targets": [
           {
@@ -225,7 +225,7 @@
                 "Arn"
               ]
             },
-            "Id": "api-to-geojson-s3-converter-dev-callExternalApi-rule-1-target"
+            "Id": "api-to-geojson-lambda-dev-callExternalApi-rule-1-target"
           }
         ]
       }
@@ -261,7 +261,7 @@
                   "/",
                   [
                     "rule",
-                    "api-to-geojson-s3-converter-dev-callExternalApi-rule-1"
+                    "api-to-geojson-lambda-dev-callExternalApi-rule-1"
                   ]
                 ]
               }
@@ -391,16 +391,16 @@
         "Ref": "ServerlessDeploymentBucket"
       },
       "Export": {
-        "Name": "sls-api-to-geojson-s3-converter-dev-ServerlessDeploymentBucketName"
+        "Name": "sls-api-to-geojson-lambda-dev-ServerlessDeploymentBucketName"
       }
     },
     "CallExternalApiLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CallExternalApiLambdaVersion4tnXLTGfJ9nWCfL2Y7fjKXEFMhY0ARYumJZPk9COiL8"
+        "Ref": "CallExternalApiLambdaVersionZtKeQJOdultWrt8niAHQEVuH6ZGDnclgxW7auBT1YM"
       },
       "Export": {
-        "Name": "sls-api-to-geojson-s3-converter-dev-CallExternalApiLambdaFunctionQualifiedArn"
+        "Name": "sls-api-to-geojson-lambda-dev-CallExternalApiLambdaFunctionQualifiedArn"
       }
     },
     "URL": {

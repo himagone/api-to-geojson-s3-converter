@@ -39,15 +39,15 @@ function getCoordinates(facility) {
 
 function findValue(obj) {
   const result ={};
-  for(const [key, value] of Object.entries(obj)){
-    if(value && typeof value === 'object' && 'value' in value){
+  for (const [key, value] of Object.entries(obj)) {
+    if (value && typeof value === 'object' && 'value' in value) {
       const dispValue = value.value;
 
-      if(value.type === 'Number'){
+      if (value.type === 'Number') {
         result[key] = Number(value.value);
-      }else if(value.type === 'Text'){
+      } else if (value.type === 'Text') {
         result[key] = value.value;
-      }else if (typeof dispValue === 'object') {
+      } else if (typeof dispValue === 'object') {
         result[key] = findValue(dispValue);
       } else {
         result[key] = dispValue;
@@ -60,11 +60,11 @@ function findValue(obj) {
   }
   return result;
 }
-function convertToGeoJSON(facilities){
+function convertToGeoJSON(facilities) {
   if (facilities.length === 0) {
     throw new Error('cannot convert to GeoJSON');
   }
-  const features = facilities.map(facility => {
+  const features = facilities.map((facility) => {
     const coordinates = getCoordinates(facility);
     if (!coordinates) throw new Error('cannot convert to GeoJSON');
     const properties = findValue(facility);
@@ -84,11 +84,11 @@ function convertToGeoJSON(facilities){
   };
 }
 
-async function callApi(apiType){
+async function callApi(apiType) {
   const requestTraceId = uuidv4();
   const headers = {
     'fiware-service': FIWARE_SERVICE,
-    'fiware-servicepath': '/' + apiType.dataname,
+    'fiware-servicepath': `/${apiType.dataname}`,
     'x-request-trace-id': requestTraceId,
     'apikey': API_KEY
   };
@@ -99,7 +99,7 @@ async function callApi(apiType){
       headers,
       timeout: 3000
     });
-    if (!response.data) {
+    if (!response.data?.length) {
       throw new Error(`Empty or invalid response for ${apiType.dataname}`);
     }
     return response;
@@ -109,8 +109,8 @@ async function callApi(apiType){
   }
 };
 
-async function pushToS3(dataname,response){
-  try{
+async function pushToS3(dataname,response) {
+  try {
     const now = moment();
     const fileName = `${dataname}/${now.format('YYYY-MM-DD')}.geojson`;
     await s3.putObject({
@@ -127,23 +127,23 @@ async function pushToS3(dataname,response){
 }
 
 exports.handler = async (event) => {
-  const results = [];
-  const errors = [];
-  for(const apiType of apiTypes){
-    try{
-      console.log(`Processing apiType: ${apiType.dataname}`);
+  const responses = [];
+  for (const apiType of apiTypes) {
+    console.log(`Processing apiType: ${apiType.dataname}`);
+    try {
       const apiData = await callApi(apiType);
       convertResult = convertToGeoJSON(apiData.data);
       await pushToS3(apiType.dataname, convertResult);
-      results.push({ apiType: apiType.dataname});
-    }catch(error){
+      responses.push({ apiType: apiType.dataname, status: 'success',});
+    } catch (error) {
       console.error('Error:', error);
-      errors.push({ apiType: apiType.dataname, message: error.message });
+      responses.push({ apiType: apiType.dataname, status: 'error', message: error.message });
     }
   }
+  const hasErrors = responses.some((r) => r.status === 'error');
   return {
-    statusCode: errors.length > 0 ? 500 : 200,
-    body: JSON.stringify({ results, errors })
+    statusCode: hasErrors ? 500 : 200,
+    body: JSON.stringify(responses),
   };
 }
 
